@@ -6,7 +6,7 @@ import logging
 from all_functions import safe_waf, commonplace_text, check_password
 from markupsafe import escape
 from win32comext.adsi.demos.search import search
-
+# You can use Argon or some strongger password encryption
 waf = safe_waf()
 
 
@@ -175,4 +175,5 @@ def make_secrets():
     conn.commit()
     conn.close()
 make_secrets()
+
 
