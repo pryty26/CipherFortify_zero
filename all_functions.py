@@ -4,6 +4,7 @@ import os
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import random
+import secrets
 import time
 from functools import wraps
 from pygments.lexer import default
@@ -18,6 +19,10 @@ import html
 import requests
 
 
+
+
+
+
 def login_check(f):# Functions to check if the user is logged in
     @wraps(f)
     def decorated_function(*args, **kwargs):    # save the state
@@ -26,7 +31,11 @@ def login_check(f):# Functions to check if the user is logged in
 
         #check session timeout
         if 'login_time' not in session or time.time() - session['login_time'] > 18000:  #about 5 hours,if session is timeout redirect to login page
+            accept_type = session.get('accept_type')
+            cookies_accept = session.get('cookies_accept')
             session.clear()
+            session['cookies_accept'] = cookies_accept
+            session['cookies_form'] = accept_type
             return redirect(url_for('login_page'))
 
         return f(*args, **kwargs)   # if user had login, then return the saved state
@@ -84,7 +93,7 @@ class safe_waf:
                 lambda s: re.search(r'"1|1"', s, re.IGNORECASE) and re.search(r'="', s, re.IGNORECASE),
                 lambda s: re.search(r"'1|1'", s, re.IGNORECASE) and re.search(r"='", s, re.IGNORECASE),
                 lambda s: re.search(r'.+".+=.?",|.+%.+', s, re.IGNORECASE),
-                lambda s:re.search(r".+'.+=.?'|%27|.&.|.\|.|.|%201|or.?.+.?=.?|or.?1.?=|and.?1.?=|union|select|drop|insert", s, re.IGNORECASE)
+                lambda s:re.search(r".+'.+=.?'|%27|.&.|.\|.|%201|or.?.+.?=.?|or.?1.?=|and.?1.?=|union|select|drop|insert", s, re.IGNORECASE)
             ]
             for rule in rules:
                 if rule(sql):
@@ -154,36 +163,27 @@ waf = safe_waf()
 
 def simple_create_sql():
     conn = sqlite3.connect('all_data.db')
+    try:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE,
+                salt TEXT,
+                hashed_password TEXT
+            )
+        ''')
 
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE,
-            salt TEXT,
-            hashed_password TEXT
-        )
-    ''')
-
-    conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_name ON users (name)')  #magic!!!
-
-    password = 'mh123456'
-    salt = 'add_salt'
-    hashed_password = hashlib.sha256((password + salt).encode()).hexdigest()
-    # test account
-    conn.execute(
-        "INSERT INTO users (name, salt,  hashed_password) VALUES (?,?,?)",
-        ('pryty', salt, hashed_password)
-        )
+        conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_name ON users (name)')  #magic!!!
 
 
-    # 查询数据
-    cursor = conn.execute("SELECT * FROM users")
-    for row in cursor:
-        print(f"ID: {row[0]}, NAME: {row[1]}, SALT: {row[2]},HASHED_PASSWORD: {row[3]}")
+        print('sqlite3 ready')
+    except Exception as e:
+        print(f"sqlite create error:{e}")
 
 
     conn.commit()
     conn.close()
+simple_create_sql()
 
 def add_user(username:str, password:str)->dict[str,any]:
     conn = None
@@ -195,11 +195,17 @@ def add_user(username:str, password:str)->dict[str,any]:
         if sql_check_result.get('success') == 'warning':
             if xss_check_result.get('success') == 'warning':
                 logging.warning(f'The IP:{request.remote_addr} is using sql injection, and xss injection!We have did the html escape he used:{safe_username}')
+
                 return {'success': False,'message': 'Username contains special characters, please choose a different one'}
+
             logging.warning(f'The IP:{request.remote_addr} is using sql injection,He used {safe_username}')
+
             return {'success':False,'message':'Username contains special characters, please choose a different one'}
+
+
         elif xss_check_result.get('success') == 'warning':
             logging.warning(f'The IP:{request.remote_addr} is using xss injection,He used {safe_username}')
+
             return {'success': 'warning', 'message': 'the user is using xss injection!'}
 
         conn = sqlite3.connect('all_data.db')
