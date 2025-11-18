@@ -1,3 +1,5 @@
+import html
+
 from cryptography.fernet import Fernet
 import sqlite3
 import hashlib
@@ -12,19 +14,27 @@ waf = safe_waf()
 
 def secrets_encrypt(username, password:str, the_secrets: str, name:str) -> dict:
     conn = sqlite3.connect('user_secrets.db')
+    cursor = conn.cursor()
     try:
+
         if not the_secrets:
             return {'success': False, 'message': 'No secrets provided'}
         if not all([password, name]):
             return {'success': False, 'message': 'Missing required fields'}
-        if the_secrets:
-            name_safe_check_result = waf.all_check(name)
-            password_safe_check_result = waf.all_check(password)
-            secrets_result = waf.all_check(the_secrets)
-            if any(result['success']=='warning' for result in [name_safe_check_result,password_safe_check_result,secrets_result]):
-                safe_username = escape(username)
-                logging.warning(f'{safe_username} is using attack!{name_safe_check_result}\n{secrets_result}\n{password_safe_check_result}')
-                return{'success':'warning','message':'we are under attack！(StarCraft meme)'}
+
+        name = username
+
+
+        name_safe_check_result = waf.all_check(username)
+        password_safe_check_result = waf.xss_check(password)
+        secrets_result = waf.xss_check(the_secrets)
+
+        suspicious_results = [name_safe_check_result, password_safe_check_result, secrets_result]
+
+        if any(result.get('success') == 'warning' for result in suspicious_results):
+            safe_username = escape(username)
+            logging.warning(f'Security alert from {safe_username}: {suspicious_results}')
+            return {'success': False, 'message': 'Security check failed'}
         pass_strength = check_password(password)
 
         if pass_strength['success'] == True:
@@ -33,6 +43,7 @@ def secrets_encrypt(username, password:str, the_secrets: str, name:str) -> dict:
             return {'success': False, 'message': f"{pass_strength['message']}"}
             #when we return the function is over so we can put the crypto to there
 
+        the_secrets = html.escape(the_secrets)
 
         key = Fernet.generate_key()
 
@@ -50,7 +61,7 @@ def secrets_encrypt(username, password:str, the_secrets: str, name:str) -> dict:
         hashed_name=hashlib.sha256(name.encode()+key).hexdigest()
         hashed_username = hashlib.sha256(username.encode()).hexdigest()
 
-        conn.execute(
+        cursor.execute(
             "INSERT INTO users(name, hashed_name, hashed_username, key, data)VALUES(?,?,?,?,?)",
             (name, hashed_name, hashed_username, key.decode(), encrypted))
         conn.commit()
@@ -63,9 +74,9 @@ def secrets_encrypt(username, password:str, the_secrets: str, name:str) -> dict:
         logging.error(f'Database error during login: {e}')
         return {'success': False, 'message': 'error, sql error'}
 
-    except TypeError as e:
+    except (TypeError,ValueError) as e:
         logging.error(f'Data format error: {e}')
-        return {'success': False, 'message': 'System error'}
+        return {'success': False, 'message': 'Data form error/System error'}
 
     except Exception as e:
         logging.error(f'Unexpected login error: {e}')
@@ -78,19 +89,31 @@ def secrets_encrypt(username, password:str, the_secrets: str, name:str) -> dict:
 
 
 
-def find_all_name(username, user_input:str) -> dict:
+def find_all_name(username:str, user_input:str) -> dict:
+    conn = 'conn_unstart'
+    all_data = ''
     try:
+
+        input_safe_check_result = waf.all_check(user_input)
+        if input_safe_check_result['success'] == 'warning':
+            safe_username = escape(username)
+            logging.warning(
+                f'{safe_username} is using attack!')
+            return {'success': 'warning', 'message':'illegal input!!!'}
+
+
         user_query=commonplace_text(user_input)
-        if user_query in['searchallname', 'searchall', 'searchalldata', 'allname', 'alldata']:
+        if user_query in ['searchallname', 'searchall', 'searchalldata', 'allname', 'alldata', 'search']:
             hashed_username = hashlib.sha256(username.encode()).hexdigest()
             conn = sqlite3.connect('user_secrets.db')
-            select_result = conn.execute("SELECT name FROM users WHERE hashed_username = ?",
+            cursor = conn.cursor()
+            select_result = cursor.execute("SELECT name FROM users WHERE hashed_username = ?",
                          (hashed_username,))
             select_result2 = select_result.fetchall()
             if select_result2:
                 all_names = [item[0] for item in select_result2]
                 all_data = '\n'.join(all_names)
-            return {'success':True,'message':all_data}
+            return {'success':True,'message':f'{all_data}'}
         else:
             return{'success':False,'message':'user_input is ?'}
     except sqlite3.OperationalError as e:
@@ -103,7 +126,8 @@ def find_all_name(username, user_input:str) -> dict:
         logging.error(f'Unexpected login error: {e}')
         return{'success':'error','message':'System error please try again later'}
     finally:
-        conn.close()
+        if conn != 'conn_unstart':
+            conn.close()
 
 
 
@@ -111,11 +135,12 @@ def find_all_name(username, user_input:str) -> dict:
 
 
 def secrets_decrypt(username, password:str, name:str) -> dict:
+    conn = ''
     try:
 
         if name and password:
             name_safe_check_result = waf.all_check(name)
-            password_safe_check_result = waf.all_check(password)
+            password_safe_check_result = waf.xss_check(password)
             if any(result['success']=='warning' for result in [name_safe_check_result,password_safe_check_result]):
                 safe_username = escape(username)
                 logging.warning(f'{safe_username} is using attack!{name_safe_check_result}\n{password_safe_check_result}')
@@ -124,8 +149,9 @@ def secrets_decrypt(username, password:str, name:str) -> dict:
 
 
         conn = sqlite3.connect('user_secrets.db')
+        cursor = conn.cursor()
         hashed_username = hashlib.sha256(username.encode()).hexdigest()
-        sql_select_result = conn.execute("SELECT key, data FROM users WHERE hashed_username = ? AND name = ?",
+        sql_select_result = cursor.execute("SELECT key, data FROM users WHERE hashed_username = ? AND name = ?",
                      (hashed_username, name))
         select_result = sql_select_result.fetchone()
 
@@ -157,7 +183,8 @@ def secrets_decrypt(username, password:str, name:str) -> dict:
         logging.error(f'Unexpected login error: {e}')
         return{'success':'error','message':'System error please try again later'}
     finally:
-        conn.close()
+        if conn != '':
+            conn.close()
 
 
 

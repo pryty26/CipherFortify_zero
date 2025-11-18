@@ -93,7 +93,7 @@ class safe_waf:
                 lambda s: re.search(r'"1|1"', s, re.IGNORECASE) and re.search(r'="', s, re.IGNORECASE),
                 lambda s: re.search(r"'1|1'", s, re.IGNORECASE) and re.search(r"='", s, re.IGNORECASE),
                 lambda s: re.search(r'.+".+=.?",|.+%.+', s, re.IGNORECASE),
-                lambda s:re.search(r".+'.+=.?'|%27|.&.|.\|.|%201|or.?.+.?=.?|or.?1.?=|and.?1.?=|union|select|drop|insert", s, re.IGNORECASE)
+                lambda s: re.search(r".+'.+=.?'|%27|.&.|.\|.|%201|or.?.+.?=.?|or.?1.?=|and.?1.?=|union|select|drop|insert", s, re.IGNORECASE)
             ]
             for rule in rules:
                 if rule(sql):
@@ -209,10 +209,11 @@ def add_user(username:str, password:str)->dict[str,any]:
             return {'success': 'warning', 'message': 'the user is using xss injection!'}
 
         conn = sqlite3.connect('all_data.db')
+        cursor = conn.cursor()
         salt = secrets.token_hex(16)
         add_hashed_password = hashlib.sha256((password + salt).encode()).hexdigest()
 
-        conn.execute(
+        cursor.execute(
             "INSERT INTO users (name, salt, hashed_password) VALUES (?,?,?)",
             (safe_username, salt , add_hashed_password)
         )
@@ -248,7 +249,8 @@ def verify_the_password(username:str,password:str) -> dict[str, any]:
             return {'success': 'warning', 'message': 'the user is using xss injection!'}
 
         conn = sqlite3.connect('all_data.db')
-        cursor = conn.execute('SELECT salt, hashed_password FROM users WHERE name = ?',
+        the_cursor = conn.cursor()
+        cursor = the_cursor.execute('SELECT salt, hashed_password FROM users WHERE name = ?',
                               (safe_username,))
         user_item = cursor.fetchone()
         if user_item is None:
@@ -317,18 +319,32 @@ def check_password(password:str) -> dict:
             lambda s: len(s)>8,
             lambda s: len(s) > 12,
         ]
+        rules2 = [
+            lambda s: len(s)<8,
+            lambda s: s.isalpha(),
+            lambda s: re.search(r'abc|password|qwerty|abc123|letmein|111111|'
+                                    r'admin|welcome|monkey|dragon|1234|hello', s,
+                                    re.IGNORECASE),
+            lambda s: re.search(r'(.)\1\1',s),
+            lambda s: len(s)<6,
+        ]
         if password:
             count = sum(1 for rule in rules if rule(password))
+
+            miinus_pistet = sum(1 for rule in rules2 if rule(password))
+            #emmä muista engu
+            count = count - miinus_pistet
             pass_point = str(count)
-            if count <= 4:
+            if count <= 2:
+                strength = 'very weak!!!'
+            elif count <= 3:
                 strength = 'weak'
-                return {'success': True, 'message': "register success but you should use another password because your password is too weak(or just don't mind)"}
             elif count <= 6:
                 strength = 'medium'
             else:
                 strength = 'strong! nice password bro!'
 
-            return{'success':True, 'message':f'register success your password is{strength}'}
+            return{'success':True, 'message':f'{strength}'}
     except TypeError as e:
         logging.warning(f'check password:Type error:{e}')
         return{'success':'error'}

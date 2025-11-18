@@ -1,6 +1,6 @@
 
 import logging
-import secrets
+import secrets as sec #huom！！！！！！！！！！！！！！！！！
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 import os
 import json
@@ -8,11 +8,13 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import time
 from requests_functions import simple_request
-from all_functions import login_check, verify_the_password, commonplace_text, white_ip_check, add_user
+from all_functions import login_check, verify_the_password, commonplace_text, white_ip_check, add_user, check_password
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from functools import wraps
-
+from user_secrets import secrets_encrypt, secrets_decrypt, find_all_name, make_secrets
+import html
+import string
 print('import ready')
 
 def cookies_check(f):
@@ -23,9 +25,18 @@ def cookies_check(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def generatePassword(length:int):
+    alphabet = string.ascii_letters + string.digits + "!@#$^?"
+    password = ''.join(sec.choice(alphabet) for _ in range(length))
+    return password
+
 app = Flask(__name__)
 
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
+
+
+
+
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', sec.token_hex(32))
 #Set secret key
 
 handler = RotatingFileHandler(
@@ -44,7 +55,7 @@ logging.basicConfig(
 limiter = Limiter(
     app = app,
     key_func = get_remote_address,
-    default_limits = ['3600 per minute']
+    default_limits = ['3600 per minute'],
 )
 
 @app.route('/')
@@ -99,7 +110,7 @@ def register():
         success_value = result.get('success')
 
         if success_value is True or success_value == "True":
-            session['user_id'] = secrets.token_hex(32)
+            session['user_id'] = sec.token_hex(32)
             session['username'] = f'{username}'
             session['login_time'] = time.time()
             return redirect('/home')
@@ -113,7 +124,7 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 @cookies_check
-@limiter.limit('15 per minute,200 per hour')
+@limiter.limit('10 per minute,60 per hour')
 def login_page():
 
     if request.method == 'POST':
@@ -123,11 +134,12 @@ def login_page():
         result = verify_the_password(username, password)
         success_value = result.get('success')
         if success_value is True or success_value == "True":
-            session['user_id'] = secrets.token_hex(32)
+            session['user_id'] = sec.token_hex(32)
             session['username'] = f'{username}'
             session['login_time'] = time.time()
             return redirect('/home')
         elif result.get('success') == 'warning':
+            print(f"The IP:{request.remote_addr} is {result.get('message')}")
             logging.warning(f'The IP:{request.remote_addr} is{result.get('message')}')
             return redirect('/admin/login')
         else:
@@ -138,20 +150,134 @@ def login_page():
 @app.route('/home', methods=['GET','POST'])
 @cookies_check
 @login_check
-@limiter.limit('15 per minute,200 per hour')
+@limiter.limit('15 per minute,150 per hour')
 def home():
     return render_template('main.html')
+
+@app.route('/tips', methods=['GET','POST'])
+@cookies_check
+@login_check
+@limiter.limit('10 per minute, 100 per hour')
+def tips():
+    return render_template('tips.html')
+
+
+@app.route('/secrets', methods=['GET', 'POST'])
+@cookies_check
+@login_check
+@limiter.limit('10 per minute, 100 per hour')
+def secrets_page():
+    username = session.get('username')
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        # From fronttend get action
+
+
+        if action == 'encrypt':
+            name = request.form.get('name')
+            password = request.form.get('password')
+            the_secrets = request.form.get('the_secrets')
+            result = secrets_encrypt(username, password, the_secrets, name)
+
+            return render_template('secrets.html',
+                                   message=result.get('message'),
+                                   message_type='success' if result.get('success') else 'error')
+
+        elif action == 'decrypt':
+            crsf_token = "pryty26"
+            if crsf_token != request.form.get('csrf_token',None):
+                logging.warning(f'Crsf attack!!! IP:{request.remote_addr},Username:{session['username']} UA:{request.headers.get('user-agent',None)}')
+                return render_template('secrets.html',
+                                       decrypt_result='Error',
+                                       decrypt_name='Error')
+            name = request.form.get('name',None)
+            password = request.form.get('password')
+
+            name = html.escape(name)
+            result = secrets_decrypt(username, password, name)
+            success = result.get('success')
+            if success == 'warning':
+                return render_template('secrets.html',
+                                   decrypt_result=result.get('message'),
+                                   decrypt_name='None')
+            return render_template('secrets.html',
+                                   decrypt_result=result.get('message'),
+                                   decrypt_name=name,
+                                   message_type=success)
+
+        elif action == 'search':
+            user_input = request.form.get('search_input')
+            result = find_all_name(username, user_input)
+            search_result = result.get('message')
+            if search_result:
+                success = result.get('success')
+                if success == 'warning':
+                    return render_template('secrets.html',
+                                           decrypt_result=result.get('message'),
+                                           decrypt_input='None')
+                return render_template('secrets.html',
+                                       search_result=search_result,
+                                       search_input=html.escape(user_input),
+                                       message_type=result.get('success'))
+            else:
+                search_result = 'You have not encrypt any data'
+                return render_template('secrets.html',
+                                       search_result=search_result,
+                                       search_input=user_input,
+                                       message_type=result.get('success'))
+    return render_template('secrets.html')
+
+@app.route('/admin', methods=['GET'])
+@limiter.limit('5 per minute, 10 per hour')
+def honey_admin():
+    logging.warning(f"The IP:{request.remote_addr} and UA: {request.headers.get('user-agent'),'UA is None'} is on admin page")
+    return render_template('honeystars.html')
+@app.route('/password_tools', methods=['GET', 'POST'])
+@cookies_check
+@login_check
+@limiter.limit('20 per minute, 300 per hour')
+def password_tools():
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'generate':
+            try:
+                length = int(request.form.get('password_length', 12))
+            except (ValueError,TypeError):
+                return render_template('password_tools.html',
+                                       generated_password='Length must to be a number')
+            generated_password = generatePassword(length)
+            return render_template('password_tools.html',
+                                   generated_password=generated_password)
+
+        elif action == 'check':
+            password = request.form.get('password_to_check')
+            password = html.escape(password)
+            result = check_password(password)
+
+            return render_template('password_tools.html',
+                                   strength_result=True,
+                                   strength_class=result.get('message', ''), strength_message=result.get('message', ''))
+
+    return render_template('password_tools.html')
 
 
 def main():
     print("🚀 启动 Flask 服务器 (使用 Waitress)...")
     print("📍 访问地址: http://localhost:8080")
-    print("📍 局域网访问: http://你的IP:8080")
+    print("📍 局域网访问: http://192.168.1.113:8080")
     print("⏹️  按 Ctrl+C 停止服务器\n")
 
     try:
         from waitress import serve
-        serve(app, host='0.0.0.0', port=8080, threads=4)
+        serve(app,
+              host='0.0.0.0',
+              port=8080,
+              threads=8,  # 增加线程数
+              connection_limit=1000,  # 增加连接限制
+              asyncore_loop_timeout=1,  # 减少超时
+              channel_timeout=60)  # 增加通道超时
 
     except KeyboardInterrupt:
         print("\n🛑 服务器已停止")
