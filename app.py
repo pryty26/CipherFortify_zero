@@ -12,7 +12,7 @@ from all_functions import login_check, verify_the_password, commonplace_text, wh
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from functools import wraps
-from user_secrets import secrets_encrypt, secrets_decrypt, find_all_name, make_secrets
+from user_secrets import secrets_encrypt, secrets_decrypt, find_all_name, make_secrets, delete_secrets
 import html
 import string
 print('import ready')
@@ -126,7 +126,7 @@ def register():
 @cookies_check
 @limiter.limit('10 per minute,60 per hour')
 def login_page():
-
+#def verify_the_password(username:str,password:str) -> dict[str, any]:
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -160,6 +160,27 @@ def home():
 @limiter.limit('10 per minute, 100 per hour')
 def tips():
     return render_template('tips.html')
+
+
+
+
+@app.route('/delete_secrets',methods=['GET','POST'])
+@cookies_check
+@login_check
+@limiter.limit('10 per minute, 50 per hour')
+def delete_secrets():
+    username = session.get('username')
+    if request.method == 'POST':
+        name = request.form.get('name')
+        password = request.form.get('password')
+        user_input = request.form.get('user_input')
+        result = delete_secrets(username,password,name,user_input)
+        return render_template('delete_secrets.html',
+                               message=result.get('message','error'),
+                               message_type='success' if result.get('success') else 'error')
+    #def delete_secrets(username:str,password:str , name:str, user_input:str) -> dict:
+
+    return render_template('delete_secrets.html')
 
 
 @app.route('/secrets', methods=['GET', 'POST'])

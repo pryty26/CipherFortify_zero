@@ -37,14 +37,15 @@ def get_host_ip(full_domain:str) -> dict:
     try:
         ipv4 = socket.gethostbyname(hostname)
         ipv6 = socket.getaddrinfo(hostname,None, socket.AF_INET6)
-        return {'success':True, 'message':f'the host = {hostname},ipv4 = {ipv4} ipv6={ipv6}'}
+        return {'success':True, 'message':f'the host = {hostname} ||| ipv4 = {ipv4} ||| ipv6={ipv6}'}
     except socket.gaierror as e:
         return {'success':'error','message':'illegal domain name, please check again'}
     except Exception as e:
         return {'success':'error','message':f'error{e}'}
 
 
-
+result = get_host_ip('http://scanme.nmap.org/')
+print(result)
 """
 Due to the sensitive nature of the following functions, in order to comply with laws and maintain social/cyberspace order, these functions will not be implemented.
 

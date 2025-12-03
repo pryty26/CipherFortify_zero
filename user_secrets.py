@@ -1,5 +1,30 @@
-import html
+"""正确理解这个加密设计
+我的设计其实是三防护加密：
 
+需要三者同时拥有才能解密：
+
+✅ 用户密码（只有用户知道）
+
+✅ 随机密钥（每个记录不同，存在数据库）
+
+✅ 固定服务器密钥（存在服务器文件系统）
+
+这个设计的优势
+1. 防御拖库攻击（数据库泄露）
+坏人只拿到数据库 → 只有随机密钥，缺用户密码和服务器密钥，您暴力破解，我服务器密钥那么长 你怎么破？
+
+根本无法解密任何数据
+
+2. 防御服务器文件泄露
+攻击者只拿到sec_key.txt → 只有服务器密钥，缺用户密码和随机密钥
+
+同样无法解密
+前提是连续泄露才能暴力破解
+"""
+
+
+import html
+import datetime
 from cryptography.fernet import Fernet
 import sqlite3
 import hashlib
@@ -7,10 +32,25 @@ import base64
 import logging
 from all_functions import safe_waf, commonplace_text, check_password
 from markupsafe import escape
-from win32comext.adsi.demos.search import search
-
+from all_functions import verify_the_password
 waf = safe_waf()
 
+def secret_get():
+    try:
+        with open('sec_key.txt','r') as f:
+            key = f.read().strip()
+        return key
+    except FileNotFoundError as e:
+        print('FileNotFind')
+        return None
+    except Exception as e:
+        logging.error(f'error:{e}')
+        print('secret_get_error')
+        return None
+try:
+    secret_key = secret_get().encode()#崩溃了就调试
+except Exception as e:
+    print(e)
 
 def secrets_encrypt(username, password:str, the_secrets: str, name:str) -> dict:
     conn = sqlite3.connect('user_secrets.db')
@@ -22,14 +62,14 @@ def secrets_encrypt(username, password:str, the_secrets: str, name:str) -> dict:
         if not all([password, name]):
             return {'success': False, 'message': 'Missing required fields'}
 
-        name = username
 
 
-        name_safe_check_result = waf.all_check(username)
+        username_safe_check_result = waf.all_check(username)
         password_safe_check_result = waf.xss_check(password)
         secrets_result = waf.xss_check(the_secrets)
+        name_safe_check_result = waf.all_check(name)
 
-        suspicious_results = [name_safe_check_result, password_safe_check_result, secrets_result]
+        suspicious_results = [username_safe_check_result, name_safe_check_result, password_safe_check_result, secrets_result]
 
         if any(result.get('success') == 'warning' for result in suspicious_results):
             safe_username = escape(username)
@@ -49,7 +89,8 @@ def secrets_encrypt(username, password:str, the_secrets: str, name:str) -> dict:
 
         encoded_password = password.encode()
 
-        combined = encoded_password + key
+        combined = encoded_password + key + secret_key
+
 
         cipher_key = hashlib.sha256(combined).digest()
 
@@ -60,10 +101,10 @@ def secrets_encrypt(username, password:str, the_secrets: str, name:str) -> dict:
         encrypted = cipher.encrypt(secret)
         hashed_name=hashlib.sha256(name.encode()+key).hexdigest()
         hashed_username = hashlib.sha256(username.encode()).hexdigest()
-
+        timestamp = str(datetime.date.today())
         cursor.execute(
-            "INSERT INTO users(name, hashed_name, hashed_username, key, data)VALUES(?,?,?,?,?)",
-            (name, hashed_name, hashed_username, key.decode(), encrypted))
+            "INSERT INTO users(name, hashed_name, hashed_username, key, data, timestamp)VALUES(?,?,?,?,?,?)",
+            (name, hashed_name, hashed_username, key.decode(), encrypted, timestamp))
         conn.commit()
         return {'success': True, 'message': f'encrypted:{encrypted}'}
     except sqlite3.IntegrityError as e:
@@ -90,7 +131,7 @@ def secrets_encrypt(username, password:str, the_secrets: str, name:str) -> dict:
 
 
 def find_all_name(username:str, user_input:str) -> dict:
-    conn = 'conn_unstart'
+    conn = None
     all_data = ''
     try:
 
@@ -107,7 +148,7 @@ def find_all_name(username:str, user_input:str) -> dict:
             hashed_username = hashlib.sha256(username.encode()).hexdigest()
             conn = sqlite3.connect('user_secrets.db')
             cursor = conn.cursor()
-            select_result = cursor.execute("SELECT name FROM users WHERE hashed_username = ?",
+            select_result = cursor.execute("SELECT name, id, timestamp FROM users WHERE hashed_username = ?",
                          (hashed_username,))
             select_result2 = select_result.fetchall()
             if select_result2:
@@ -134,14 +175,15 @@ def find_all_name(username:str, user_input:str) -> dict:
 
 
 
-def secrets_decrypt(username, password:str, name:str) -> dict:
+def secrets_decrypt(username:str, password:str, name:str, user_input:str) -> dict:
     conn = ''
     try:
 
         if name and password:
+            input_safe_check_result = waf.all_check(user_input)
             name_safe_check_result = waf.all_check(name)
             password_safe_check_result = waf.xss_check(password)
-            if any(result['success']=='warning' for result in [name_safe_check_result,password_safe_check_result]):
+            if any(result['success']=='warning' for result in [name_safe_check_result, password_safe_check_result, input_safe_check_result]):
                 safe_username = escape(username)
                 logging.warning(f'{safe_username} is using attack!{name_safe_check_result}\n{password_safe_check_result}')
                 return{'success':'warning','message':'we are under attack！(StarCraft meme)'}
@@ -164,7 +206,7 @@ def secrets_decrypt(username, password:str, name:str) -> dict:
 
         encoded_password = password.encode()
         encoded_key = key.encode()
-        combined = encoded_password + encoded_key
+        combined = encoded_password + encoded_key + secret_key
 
         cipher_key = hashlib.sha256(combined).digest()
         cipher = Fernet(base64.urlsafe_b64encode(cipher_key))
@@ -186,7 +228,78 @@ def secrets_decrypt(username, password:str, name:str) -> dict:
         if conn != '':
             conn.close()
 
+def delete_secrets(username:str,password:str , name:str, user_input:str) -> dict:
+    try:
+        if name and user_input and password:
+            input_safe_check_result = waf.xss_check(user_input)
+            name_safe_check_result = waf.all_check(name)
+            if any(result['success']=='warning' for result in [name_safe_check_result, input_safe_check_result]):
+                safe_username = escape(username)
+                logging.warning(f'{safe_username} is using attack!{name_safe_check_result}\n{user_input}')
+                return{'success':'warning','message':'we are under attack！(StarCraft meme)'}
+        result = verify_the_password(username,password)
+        if result['success'] == True:
+            conn = None
+            try:
+                conn = sqlite3.connect('user_secrets.db')
+                cursor = conn.cursor()
+                hashed_username = hashlib.sha256(username.encode()).hexdigest()
+                if commonplace_text(user_input) in ['deleteall','alldelete']:
+                    cursor.execute('DELETE FROM users WHERE hashed_username =?',
+                                   (hashed_username,))
+                    return{'success':True,'message':"all data delete"}
+                elif user_input.strip().lower().startswith('name'):
+                    cursor.execute(
+                        'SELECT * FROM users WHERE name = ? AND hashed_username = ?',
+                        (name, hashed_username)
+                    )
+                    exists = cursor.fetchone()
 
+                    if not exists:
+                        return {
+                            'success': False,
+                            'message': f'Record with ID {html.escape(name)} not found',
+                            'deleted_count': 0
+                        }
+
+                    cursor.execute('DELETE FROM users WHERE name = ? AND hashed_username =?',
+                           (name, hashed_username))
+                    return {'success':True, 'message':f'{html.escape(name)} deleted'}
+
+                elif user_input.strip().lower().startswith('id'):
+                    try:
+                        id = user_input.split(':', 1)[1]
+                        if not id.isdigit():
+                            return {'success': 'error',
+                                    'message': 'hi mr dumpling, id needs to be a number'}  # who so dump^^^
+                    except IndexError:
+                        return{'success':'error','message':'hi mr dumpling, please use : to split the id'}#who so dump^^^
+
+                    cursor.execute(
+                        'SELECT * FROM users WHERE name = ? AND hashed_username = ? AND id = ?',
+                        (name,hashed_username, id)
+                    )
+                    exists = cursor.fetchone()[0] > 0
+
+                    if not exists:
+                        return {
+                            'success': False,
+                            'message': f'Record with ID {html.escape(id)} not found',
+                            'deleted_count': 0
+                        }
+
+                    cursor.execute('DELETE FROM users WHERE name = ? AND hashed_username =? AND id = ?',
+                           (name, hashed_username, id))
+                    return {'success':True, 'message':f'{html.escape(name)} deleted'}
+            finally:
+                if conn:
+                    conn.commit()
+                    conn.close()
+        else:
+            return {"success": False}
+    except Exception as e:
+        logging.error(f'error:{e}')
+        return{'success':'error'}
 
 def make_secrets():
     conn = sqlite3.connect('user_secrets.db')
@@ -196,7 +309,8 @@ def make_secrets():
     name TEXT,
     hashed_username TEXT,
     key TEXT,
-    data BLOB
+    data BLOB,
+    timestamp TEXT
     )''')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_user_secrets ON users(hashed_username, name)')  # magic!!!
     cursor = conn.execute("SELECT * FROM users")

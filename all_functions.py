@@ -17,7 +17,7 @@ from tkinter.constants import INSERT
 from flask import request
 import html
 import requests
-
+import hmac
 
 
 
@@ -86,14 +86,11 @@ class safe_waf:
 
     def sql_check(self,sql:str):
         try:
+            #I had used Parameterized Query and html.escape so the waf is just warning
             rules = [
-                lambda s:s in self.simple_sql,
-                lambda s:any(s.startswith(prefix)for prefix in self.sql_prefixes),
-                lambda s:any(s.endswith(suffix)for suffix in ['--', '"1', "\'1",'#']),
-                lambda s: re.search(r'"1|1"', s, re.IGNORECASE) and re.search(r'="', s, re.IGNORECASE),
-                lambda s: re.search(r"'1|1'", s, re.IGNORECASE) and re.search(r"='", s, re.IGNORECASE),
-                lambda s: re.search(r'.+".+=.?",|.+%.+', s, re.IGNORECASE),
-                lambda s: re.search(r".+'.+=.?'|%27|.&.|.\|.|%201|or.?.+.?=.?|or.?1.?=|and.?1.?=|union|select|drop|insert", s, re.IGNORECASE)
+                lambda s: re.search(r"union|select|from", s, re.IGNORECASE) and re.search(r'from|select', s, re.IGNORECASE),
+
+                lambda s: re.search(r"=|%|&|.+\|.+|--|>|<|\*|sleep", s, re.IGNORECASE)
             ]
             for rule in rules:
                 if rule(sql):
@@ -110,12 +107,11 @@ class safe_waf:
     def xss_check(self,xss:str):
         try:
             xss_rules = [
-                lambda s: s in self.simple_xss,
-                lambda s: any(s.startswith(prefix) for prefix in self.xss_prefixes),
                 lambda s: s.endswith('>') and re.search(r"<", s, re.IGNORECASE),
                 lambda s:re.search(
                     r"onerror=alert\(|href=\alert|onload=alert\(|javascript:alert\(|vbscript:msgbox\(|alert\(document\.cookie\)|prompt\(document\.domain\)", s, re.IGNORECASE)
             ]
+
             for xss_rule in xss_rules:
                 if xss_rule(xss):
                     return {'success': 'warning', 'type': 'xss'}
@@ -228,10 +224,17 @@ def add_user(username:str, password:str)->dict[str,any]:
         if conn:
             conn.close()
 
-
+def time_delay(start_time):
+    try:
+        delay = time.time() - start_time
+        if delay < 0.8:
+            time.sleep(0.8 - delay)
+    except Exception as e:
+        pass
 
 def verify_the_password(username:str,password:str) -> dict[str, any]:
     try:
+        start_time = time.time()
         conn = None
 
         sql_check_result = waf.sql_check(username)
@@ -254,19 +257,20 @@ def verify_the_password(username:str,password:str) -> dict[str, any]:
                               (safe_username,))
         user_item = cursor.fetchone()
         if user_item is None:
-            fake_salt = 'fake_salt'
-
-            input_hashed_password = hashlib.sha256((password + fake_salt).encode()).hexdigest()
-            return{'success': False, 'message':'username or password is wrong'}
-
+            time_delay(start_time)
+            return {'success': False, 'message': 'username or password is wrong'}
         salt = user_item[0]
         stored_hashed_password = user_item[1]
 
         input_hashed_password = hashlib.sha256((password + salt).encode()).hexdigest()
 
-        if input_hashed_password == stored_hashed_password:
-            return {'success': True, 'message': f'user:{safe_username}Login success!'}
+        password_correct = hmac.compare_digest(input_hashed_password, stored_hashed_password)
 
+        if password_correct:
+            #no delay in success because……he success! its no matter that has there any delay if he success= he know pass and username
+            #if username is wrong we wont verify the pass so we dont need more delay in there
+            return {'success': True, 'message': f'user:{safe_username}Login success!'}
+        time_delay(start_time)
         return{'success':False, 'message':'username or password is wrong'}
 
     except sqlite3.OperationalError as e:
@@ -351,3 +355,24 @@ def check_password(password:str) -> dict:
     except Exception as e:
         logging.warning(f'check password:error:{e}')
         return{'success':'error'}
+
+
+"""
+rules = [
+    lambda s:s in self.simple_sql,
+    lambda s:any(s.startswith(prefix)for prefix in self.sql_prefixes),
+    lambda s:any(s.endswith(suffix)for suffix in ['--', '"1', "\'1",'#']),
+    lambda s: re.search(r'"1|1"', s, re.IGNORECASE) and re.search(r'="', s, re.IGNORECASE),
+    lambda s: re.search(r"'1|1'", s, re.IGNORECASE) and re.search(r"='", s, re.IGNORECASE),
+    lambda s: re.search(r'.+".+=.?",|.+%.+', s, re.IGNORECASE),
+    lambda s: re.search(r".+'.+=.?'|%27|.&.|.\\|.|%201|or.?.+.?=.?|or.?1.?=|and.?1.?=|union|select|drop|insert", s, re.IGNORECASE)
+]
+
+xss_rules = [
+    lambda s: s in self.simple_xss,
+    lambda s: any(s.startswith(prefix) for prefix in self.xss_prefixes),
+    lambda s: s.endswith('>') and re.search(r"<", s, re.IGNORECASE),
+    lambda s:re.search(r"onerror=alert|href=\alert|onload=alert|javascript:alert|vbscript:msgbox|alert|document\\.cookie|prompt\\(document\\.domain\\)"
+]
+Old rules
+            """
