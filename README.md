@@ -4,7 +4,7 @@ Your password + our random key = true privacy. We never store your password. You
 all_function.py: Contains login, register, WAF (Web Application Firewall), and login verification functions.
 app.py: The main application file built using Flask.
 user_secrets.py: Provides encryption, decryption, find all encrypted data, and delete data functions.
-This three file is yje tree main file in my website.
+This three file is thee three main file of my website.
 
 The presentation of this website:
 The all data has encrypted by password+ServiceSecretKey+RandomSecretKey+SpecialEncryption+Hashlib
