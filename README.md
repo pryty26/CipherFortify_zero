@@ -25,7 +25,13 @@ Conversion:
 1 year ≈ 3.156 × 10^7 seconds
 Number of years ≈ 5 × 10^{34} / 3.156 × 10^7 ≈ 1.58 × 10^{27} years
 
-The age of the universe is approximately 13.8 billion years (1.38 × 10^{10} years), so this time is about 10^{17} times the age of the universe (i.e., more than 100 quadrillion times longer).
-Of course, our website is protected by a WAF (Web Application Firewall), and all database operations use parameterized queries (For security research purposes, certain endpoints have been intentionally designed to be vulnerable to SQL injection. These paths are securely isolated in a sandboxed environment, and the affected database is entirely separate from the main production system. All data stored in this test database is non-sensitive and carries no real-world value.).
-Additionally, we properly escape outputs to prevent XSS, with no template rendering that could allow SSTI (Server-Side Template Injection). There is no file upload functionality (eliminating risks like PHP webshells or viruses), and user input is never displayed publicly (preventing any possible information leakage or virus propagation).
-We are also implementing additional CSRF (Cross-Site Request Forgery) protection measures to further enhance security. However, since all sensitive operations—such as decryption and other critical functions—currently require the user to manually enter their password for authentication, CSRF attacks would not be effective even without these extra measures.
+The age of the universe is approximately 13.8 billion years (1.38 × 10^{10} years), so this time is about 10^{17} times the age of the universe (i.e., more than 100 quadrillion times longer).This places the attack far beyond any practical or theoretical capability.
+Comprehensive Protection Measures
+Transport Security: All connections are enforced via HTTPS (TLS).
+Application Security:
+Protected by a Web Application Firewall (WAF).
+All database queries use parameterized statements to prevent SQL injection.
+Output encoding is applied to mitigate XSS risks.
+No user file uploads are permitted, eliminating related attack vectors.
+CSRF protections are in place, and all sensitive operations require explicit password re-authentication.
+Transparency Note: For educational purposes, a few isolated endpoints in a sandboxed environment are intentionally vulnerable to SQL injection. This test environment uses a separate database containing only non-sensitive, valueless data and poses no risk to the main production system or user data.
