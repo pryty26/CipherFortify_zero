@@ -35,3 +35,8 @@ Output encoding is applied to mitigate XSS risks.
 No user file uploads are permitted, eliminating related attack vectors.
 CSRF protections are in place, and all sensitive operations require explicit password re-authentication.
 Transparency Note: For educational purposes, a few isolated endpoints in a sandboxed environment are intentionally vulnerable to SQL injection. This test environment uses a separate database containing only non-sensitive, valueless data and poses no risk to the main production system or user data.
+
+
+
+Attension!The whole website is opensource,collaborative, freely usable and modifiable
+Everyone is welcome for example make a issue!
