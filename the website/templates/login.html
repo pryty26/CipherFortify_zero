@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- 添加视口标签，确保移动设备正确缩放 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CipherFortify</title>
+    <style>
+        body { 
+            background: #13151a; 
+            color: #e2e8f0; 
+            font-family: sans-serif; 
+            padding: 20px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #1a1d24;
+            padding: 30px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #2d3748;
+        }
+        h1 { 
+            color: #3b82f6; 
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #e2e8f0;
+            box-sizing: border-box;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .btn-register {
+            background: #374151;
+        }
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+        }
+        .message-error {
+            background: #7f1d1d;
+            color: #fecaca;
+        }
+        
+        /* 手机优化样式 */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+                align-items: flex-start;
+                min-height: 90vh;
+                padding-top: 30px;
+            }
+            
+            .container {
+                padding: 25px 20px;
+                max-width: 100%;
+                border-radius: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+                margin-bottom: 25px;
+            }
+            
+            input[type="text"],
+            input[type="password"] {
+                padding: 16px 12px;
+                font-size: 16px; /* 防止iOS自动缩放 */
+            }
+            
+            .btn {
+                padding: 16px;
+                font-size: 16px;
+                margin: 8px 0;
+            }
+            
+            .form-group {
+                margin-bottom: 16px;
+            }
+        }
+        
+        /* 小手机优化 */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px 15px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+                margin-bottom: 20px;
+            }
+        }
+        
+        /* 横屏模式优化 */
+        @media (max-height: 500px) and (orientation: landscape) {
+            body {
+                align-items: flex-start;
+                padding-top: 20px;
+                padding-bottom: 20px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Login</h1>
+
+        <div id="message" class="message message-error" style="display: none;">
+            <!-- Message will be inserted here by JavaScript -->
+        </div>
+
+        <form method="POST" action="/login">
+            <div class="form-group">
+                <input type="text" name="username" placeholder="Username" required>
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            <button type="submit" class="btn">Login</button>
+        </form>
+
+        <button onclick="window.location.href='/register'" class="btn btn-register">
+            Go to Register
+        </button>
+    </div>
+
+    <script>
+        // Check if there's a message to display from Flask
+        window.onload = function() {
+            const messageElement = document.getElementById('message');
+            
+            // Check if Flask passed a message
+            {% if message %}
+                messageElement.textContent = '{{ message }}';
+                messageElement.style.display = 'block';
+            {% endif %}
+            
+            // Hide message when user starts typing
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    messageElement.style.display = 'none';
+                });
+            });
+        };
+    </script>
+</body>
+</html>

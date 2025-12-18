@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="JE6p4RioKiBoxVXevoXLLcNBDq-sCyppTOTDbk0Zx94" />
+    <title>Portal</title>
+    <style>
+        body { 
+            background: #13151a; 
+            color: white; 
+            font-family: sans-serif; 
+            padding: 40px 20px 80px; /* 减少底部padding，避免内容太靠下 */
+            text-align: center; 
+            min-height: 100vh;
+            margin: 0;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* 改为从顶部开始，而不是完全居中 */
+            align-items: center;
+        }
+
+        h2 {
+            font-size: clamp(1.8rem, 4vw, 2.2rem); /* 电脑上最大不超过2.2rem，更紧凑 */
+            margin-bottom: 40px;
+            margin-top: 60px; /* 顶部留白，让整体上移 */
+        }
+
+        .btn { 
+            padding: clamp(10px, 2.5vw, 14px) clamp(20px, 5vw, 32px);
+            margin: 10px;
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            text-decoration: none; 
+            display: inline-block; 
+            font-size: clamp(0.95rem, 2vw, 1.1rem);
+            min-width: 130px;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .login { background: #3b82f6; color: white; }
+        .signup { background: #374151; color: white; }
+        .danger { background: #dc2626; color: white; }
+
+        /* Cookie弹窗 */
+        #cookieModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-content {
+            background: #1a1d24;
+            padding: clamp(20px, 4vw, 30px);
+            border-radius: 8px;
+            text-align: center;
+            max-width: 440px;
+            width: 90%;
+            border: 1px solid #2d3748;
+            box-sizing: border-box;
+        }
+        .checkbox-group {
+            text-align: left;
+            margin: 20px 0;
+            padding: 16px;
+            background: #0f172a;
+            border-radius: 6px;
+        }
+        .checkbox-item {
+            margin: 14px 0;
+            display: flex;
+            align-items: flex-start;
+        }
+        .checkbox-item input {
+            margin-right: 12px;
+            margin-top: 4px;
+            transform: scale(1.3);
+        }
+        .checkbox-label {
+            font-size: clamp(13.5px, 1.8vw, 14.5px);
+            line-height: 1.5;
+        }
+        .not-recommended {
+            color: #ef4444;
+            font-size: clamp(11.5px, 1.6vw, 12.5px);
+            margin-left: 5px;
+        }
+        .modal-buttons {
+            display: flex;
+            flex-wrap: nowrap; /* 强制不换行 */
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin-top: 25px;
+            overflow-x: auto; /* 极窄屏下可横向滚动，但基本不会触发 */
+            padding: 5px 0;
+        }
+        .modal-buttons a {
+            color: #3b82f6;
+            font-size: clamp(13.5px, 1.8vw, 14.5px);
+            white-space: nowrap;
+            margin-right: 10px;
+        }
+        .modal-buttons button {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* 底部提醒条 */
+        #cookies_alert {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: rgb(27, 22, 35);
+            display: none;
+            padding: 16px;
+            border-top: 1px solid #211e2d;
+            flex-direction: column;
+            gap: 12px;
+            text-align: center;
+        }
+        #cookies_alert p {
+            margin: 0;
+            font-size: clamp(13.5px, 1.8vw, 14.5px);
+            color: rgb(93, 72, 171);
+        }
+        #cookies_alert button {
+            background: #221f2e;
+            color: rgb(100, 71, 179);
+            border: none;
+            padding: 9px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: clamp(13.5px, 1.8vw, 14.5px);
+        }
+
+        /* 手机专属优化 */
+        @media (max-width: 480px) {
+            h2 { margin-top: 40px; }
+            .btn {
+                display: block;
+                width: 85%;
+                max-width: 280px;
+                margin: 12px auto;
+                padding: 16px 0;
+                font-size: 1.1rem;
+            }
+            .modal-buttons {
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Welcome</h2>
+   
+    <div>
+        <button onclick="showCookieModal('login')" class="btn login">Login</button>
+        <button onclick="showCookieModal('signup')" class="btn signup">Sign Up</button>
+    </div>
+
+    <!-- Cookie弹窗（内容不变） -->
+    <div id="cookieModal">
+        <div class="modal-content">
+            <h3>Cookie Consent</h3>
+            <p>Please choose your cookie preferences:</p>
+           
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="essential" checked disabled>
+                    <label for="essential" class="checkbox-label">
+                        <strong>Essential Cookies</strong><br>
+                        <small>Required for basic site functionality</small>
+                    </label>
+                </div>
+               
+                <div class="checkbox-item">
+                    <input type="checkbox" id="required">
+                    <label for="required" class="checkbox-label">
+                        <strong>Accept Required Terms</strong><br>
+                        <small>Necessary for registration and service access</small>
+                    </label>
+                </div>
+               
+                <div class="checkbox-item">
+                    <input type="checkbox" id="all">
+                    <label for="all" class="checkbox-label">
+                        <strong>Accept All Terms</strong>
+                        <span class="not-recommended">(Not Recommended)</span><br>
+                        <small>Includes optional tracking and analytics</small>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <a href="/cookies">View Details</a>
+                <button onclick="closeModal()" class="btn signup">Cancel</button>
+                <button onclick="acceptRequired()" class="btn login">Accept Required</button>
+                <button onclick="acceptAll()" class="btn danger">Accept All</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cookies_alert">
+        <p>Before login or signup, please read our <a href="/cookies" style="color: #8a7bc8;">Cookies Policy</a></p>
+        <div>
+            <button onclick="showCookieModal()">Accept cookies</button>
+            <button onclick="document.getElementById('cookies_alert').style.display = 'none'">I Understand</button>
+        </div>
+    </div>
+
+    <script>
+        let nextAction = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('cookies_alert').style.display = 'flex';
+        });
+
+        function showCookieModal(action = null) {
+            nextAction = action;
+            document.getElementById('cookieModal').style.display = 'flex';
+            document.getElementById('required').checked = false;
+            document.getElementById('all').checked = false;
+        }
+
+        function closeModal() {
+            document.getElementById('cookieModal').style.display = 'none';
+            nextAction = null;
+        }
+
+        function acceptRequired() {
+            if (!document.getElementById('required').checked) {
+                alert('Please check "Accept Required Terms" to continue.');
+                return;
+            }
+            submitForm('required');
+        }
+
+        function acceptAll() {
+            if (!document.getElementById('required').checked) {
+                alert('Please check "Accept Required Terms" to continue.');
+                return;
+            }
+            document.getElementById('all').checked = true;
+            submitForm('all');
+        }
+
+        function submitForm(type) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/accept-cookies';
+
+            const inputType = document.createElement('input');
+            inputType.type = 'hidden';
+            inputType.name = 'accept_type';
+            inputType.value = type;
+            form.appendChild(inputType);
+
+            if (nextAction) {
+                const inputAction = document.createElement('input');
+                inputAction.type = 'hidden';
+                inputAction.name = 'next';
+                inputAction.value = nextAction;
+                form.appendChild(inputAction);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        document.getElementById('cookieModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+</html>

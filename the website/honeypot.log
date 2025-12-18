@@ -1,0 +1,170 @@
+2025-11-16 11:36:35,927 - Crsf attack!!! IP:127.0.0.1,Username:pryty26 UA:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0
+2025-11-16 11:38:40,295 - Crsf attack!!! IP:127.0.0.1,Username:pryty26 UA:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0
+2025-11-18 12:30:11,895 - Unexpected login error: name 'the_corsor' is not defined
+2025-11-18 12:30:17,563 - Unexpected login error: name 'the_corsor' is not defined
+2025-11-18 12:30:26,801 - Unexpected login error: name 'the_corsor' is not defined
+2025-11-18 12:31:02,902 - Unexpected login error: name 'the_corsor' is not defined
+2025-11-18 12:32:11,564 - Unexpected login error: name 'the_corsor' is not defined
+2025-11-21 13:33:26,546 - Database error during login: no such column: timestamp
+2025-12-12 13:01:57,507 - Exception on /secrets [POST]
+Traceback (most recent call last):
+  File "C:\Python\Python313\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Python\Python313\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Python\Python313\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Python\Python313\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "Y:\the website\app.py", line 29, in decorated_function
+    return f(*args, **kwargs)
+  File "Y:\the website\all_functions.py", line 41, in decorated_function
+    return f(*args, **kwargs)   # if user had login, then return the saved state
+  File "C:\Python\Python313\.venv\Lib\site-packages\flask_limiter\_limits.py", line 326, in __inner
+    return cast(R, flask.current_app.ensure_sync(obj)(*a, **k))
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "Y:\the website\app.py", line 229, in secrets_page
+    result = secrets_decrypt(username, password, name)
+TypeError: secrets_decrypt() missing 1 required positional argument: 'user_input'
+2025-12-12 13:03:51,159 - Unexpected login error: name 'user_input' is not defined
+2025-12-12 13:04:00,436 - Data format error: sequence item 0: expected str instance, tuple found
+2025-12-12 13:04:06,143 - Data format error: sequence item 0: expected str instance, tuple found
+2025-12-12 13:06:53,892 - Unexpected login error: not enough values to unpack (expected 2, got 1)
+2025-12-12 13:06:58,896 - Data format error: sequence item 0: expected str instance, tuple found
+2025-12-12 13:11:19,115 - Unexpected login error: not enough values to unpack (expected 2, got 1)
+2025-12-12 13:11:23,990 - Data format error: sequence item 0: expected str instance, tuple found
+2025-12-12 13:30:37,115 - Data format error: sequence item 0: expected str instance, tuple found
+2025-12-12 13:37:38,802 - Unexpected login error: name 'result2' is not defined
+2025-12-12 13:44:09,637 - Unexpected login error: name 're' is not defined
+2025-12-12 13:44:47,115 - Exception on /delete_secrets [POST]
+Traceback (most recent call last):
+  File "C:\Python\Python313\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Python\Python313\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Python\Python313\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Python\Python313\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "Y:\the website\app.py", line 29, in decorated_function
+    return f(*args, **kwargs)
+  File "Y:\the website\all_functions.py", line 41, in decorated_function
+    return f(*args, **kwargs)   # if user had login, then return the saved state
+  File "C:\Python\Python313\.venv\Lib\site-packages\flask_limiter\_limits.py", line 326, in __inner
+    return cast(R, flask.current_app.ensure_sync(obj)(*a, **k))
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "Y:\the website\app.py", line 187, in delete_secrets
+    result = delete_secrets(username,password,name,user_input)
+  File "Y:\the website\app.py", line 29, in decorated_function
+    return f(*args, **kwargs)
+  File "Y:\the website\all_functions.py", line 41, in decorated_function
+    return f(*args, **kwargs)   # if user had login, then return the saved state
+  File "C:\Python\Python313\.venv\Lib\site-packages\flask_limiter\_limits.py", line 326, in __inner
+    return cast(R, flask.current_app.ensure_sync(obj)(*a, **k))
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+TypeError: delete_secrets() takes 0 positional arguments but 4 were given
+2025-12-12 13:48:13,696 - Advanced admin page accessed - IP: 127.0.0.1 | Time: 2025-12-12 13:48:13 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2025-12-13 18:40:05,726 - Exception on /delete_secrets [POST]
+Traceback (most recent call last):
+  File "D:\programs\pycharm\projects\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "D:\programs\pycharm\projects\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "D:\programs\pycharm\projects\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "D:\programs\pycharm\projects\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\programs\pycharm\projects\the website\app.py", line 29, in decorated_function
+    return f(*args, **kwargs)
+  File "D:\programs\pycharm\projects\the website\all_functions.py", line 41, in decorated_function
+    return f(*args, **kwargs)   # if user had login, then return the saved state
+  File "D:\programs\pycharm\projects\.venv\Lib\site-packages\flask_limiter\_limits.py", line 326, in __inner
+    return cast(R, flask.current_app.ensure_sync(obj)(*a, **k))
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\programs\pycharm\projects\the website\app.py", line 187, in delete_secrets
+    result = delete_secrets(username,password,name,user_input)
+  File "D:\programs\pycharm\projects\the website\app.py", line 29, in decorated_function
+    return f(*args, **kwargs)
+  File "D:\programs\pycharm\projects\the website\all_functions.py", line 41, in decorated_function
+    return f(*args, **kwargs)   # if user had login, then return the saved state
+  File "D:\programs\pycharm\projects\.venv\Lib\site-packages\flask_limiter\_limits.py", line 326, in __inner
+    return cast(R, flask.current_app.ensure_sync(obj)(*a, **k))
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+TypeError: delete_secrets() takes 0 positional arguments but 4 were given
+2025-12-13 18:54:20,811 - Unexpected login error: name 're' is not defined
+2025-12-13 18:54:23,130 - Unexpected login error: name 're' is not defined
+2025-12-14 21:26:40,417 - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.1.113:8080
+2025-12-14 21:26:40,418 - [33mPress CTRL+C to quit[0m
+2025-12-14 21:27:09,458 - 127.0.0.1 - - [14/Dec/2025 21:27:09] "GET / HTTP/1.1" 200 -
+2025-12-14 21:27:09,543 - 127.0.0.1 - - [14/Dec/2025 21:27:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-12-14 21:27:13,972 - 127.0.0.1 - - [14/Dec/2025 21:27:13] "[32mPOST /accept-cookies HTTP/1.1[0m" 302 -
+2025-12-14 21:27:14,444 - 127.0.0.1 - - [14/Dec/2025 21:27:14] "GET /register HTTP/1.1" 200 -
+2025-12-14 21:27:15,705 - 127.0.0.1 - - [14/Dec/2025 21:27:15] "GET /login HTTP/1.1" 200 -
+2025-12-14 21:27:23,675 - 127.0.0.1 - - [14/Dec/2025 21:27:23] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-12-14 21:27:23,717 - 127.0.0.1 - - [14/Dec/2025 21:27:23] "GET /home HTTP/1.1" 200 -
+2025-12-14 21:27:29,048 - 127.0.0.1 - - [14/Dec/2025 21:27:29] "GET /secrets HTTP/1.1" 200 -
+2025-12-14 21:27:31,462 - Unexpected login error: name 'all_datall' is not defined
+2025-12-14 21:27:31,463 - 127.0.0.1 - - [14/Dec/2025 21:27:31] "POST /secrets HTTP/1.1" 200 -
+2025-12-14 21:27:34,047 - Unexpected login error: name 'all_datall' is not defined
+2025-12-14 21:27:34,047 - 127.0.0.1 - - [14/Dec/2025 21:27:34] "POST /secrets HTTP/1.1" 200 -
+2025-12-14 21:29:51,939 - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.1.113:8080
+2025-12-14 21:29:51,939 - [33mPress CTRL+C to quit[0m
+2025-12-14 21:32:44,472 - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.1.113:8080
+2025-12-14 21:32:44,472 - [33mPress CTRL+C to quit[0m
+2025-12-14 21:32:46,781 - 127.0.0.1 - - [14/Dec/2025 21:32:46] "GET / HTTP/1.1" 200 -
+2025-12-14 21:32:47,058 - 127.0.0.1 - - [14/Dec/2025 21:32:47] "GET / HTTP/1.1" 200 -
+2025-12-14 21:32:49,715 - 127.0.0.1 - - [14/Dec/2025 21:32:49] "[32mPOST /accept-cookies HTTP/1.1[0m" 302 -
+2025-12-14 21:32:50,046 - 127.0.0.1 - - [14/Dec/2025 21:32:50] "GET /register HTTP/1.1" 200 -
+2025-12-14 21:32:51,222 - 127.0.0.1 - - [14/Dec/2025 21:32:51] "GET /login HTTP/1.1" 200 -
+2025-12-14 21:32:57,728 - 127.0.0.1 - - [14/Dec/2025 21:32:57] "POST /login HTTP/1.1" 200 -
+2025-12-14 21:33:07,543 - 127.0.0.1 - - [14/Dec/2025 21:33:07] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-12-14 21:33:07,882 - 127.0.0.1 - - [14/Dec/2025 21:33:07] "GET /home HTTP/1.1" 200 -
+2025-12-14 21:33:10,183 - 127.0.0.1 - - [14/Dec/2025 21:33:10] "GET /secrets HTTP/1.1" 200 -
+2025-12-14 21:33:13,005 - 127.0.0.1 - - [14/Dec/2025 21:33:13] "POST /secrets HTTP/1.1" 200 -
+2025-12-14 21:33:16,244 - 127.0.0.1 - - [14/Dec/2025 21:33:16] "POST /secrets HTTP/1.1" 200 -
+2025-12-14 21:37:27,530 - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.1.113:8080
+2025-12-14 21:37:27,531 - [33mPress CTRL+C to quit[0m
+2025-12-14 21:37:31,733 - 127.0.0.1 - - [14/Dec/2025 21:37:31] "[32mPOST /secrets HTTP/1.1[0m" 302 -
+2025-12-14 21:37:31,742 - 127.0.0.1 - - [14/Dec/2025 21:37:31] "GET / HTTP/1.1" 200 -
+2025-12-14 21:37:34,760 - 127.0.0.1 - - [14/Dec/2025 21:37:34] "[32mPOST /accept-cookies HTTP/1.1[0m" 302 -
+2025-12-14 21:37:35,085 - 127.0.0.1 - - [14/Dec/2025 21:37:35] "GET /register HTTP/1.1" 200 -
+2025-12-14 21:37:36,236 - 127.0.0.1 - - [14/Dec/2025 21:37:36] "GET /login HTTP/1.1" 200 -
+2025-12-14 21:37:43,061 - 127.0.0.1 - - [14/Dec/2025 21:37:43] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-12-14 21:37:43,071 - 127.0.0.1 - - [14/Dec/2025 21:37:43] "GET /home HTTP/1.1" 200 -
+2025-12-14 21:37:49,191 - 127.0.0.1 - - [14/Dec/2025 21:37:49] "GET /secrets HTTP/1.1" 200 -
+2025-12-14 21:37:51,701 - 127.0.0.1 - - [14/Dec/2025 21:37:51] "POST /secrets HTTP/1.1" 200 -
+2025-12-14 21:37:53,239 - 127.0.0.1 - - [14/Dec/2025 21:37:53] "POST /secrets HTTP/1.1" 200 -
+2025-12-14 21:37:53,868 - 127.0.0.1 - - [14/Dec/2025 21:37:53] "POST /secrets HTTP/1.1" 200 -
+2025-12-14 21:37:54,184 - 127.0.0.1 - - [14/Dec/2025 21:37:54] "POST /secrets HTTP/1.1" 200 -
+2025-12-14 21:38:03,430 - 127.0.0.1 - - [14/Dec/2025 21:38:03] "POST /secrets HTTP/1.1" 200 -
+2025-12-14 21:38:12,730 - 127.0.0.1 - - [14/Dec/2025 21:38:12] "POST /secrets HTTP/1.1" 200 -
+2025-12-14 21:38:14,808 - 127.0.0.1 - - [14/Dec/2025 21:38:14] "GET /home HTTP/1.1" 200 -
+2025-12-14 21:38:17,154 - 127.0.0.1 - - [14/Dec/2025 21:38:17] "GET /delete_secrets HTTP/1.1" 200 -
+2025-12-14 21:38:33,477 - 127.0.0.1 - - [14/Dec/2025 21:38:33] "POST /delete_secrets HTTP/1.1" 200 -
+2025-12-14 21:38:35,537 - 127.0.0.1 - - [14/Dec/2025 21:38:35] "GET /secrets HTTP/1.1" 200 -
+2025-12-14 21:38:37,959 - 127.0.0.1 - - [14/Dec/2025 21:38:37] "POST /secrets HTTP/1.1" 200 -
+2025-12-16 09:10:20,372 - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://10.202.94.88:8080
+2025-12-16 09:10:20,373 - [33mPress CTRL+C to quit[0m
+2025-12-18 13:13:19,937 - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.1.113:8080
+2025-12-18 13:13:19,937 - [33mPress CTRL+C to quit[0m

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CipherFortify - Home</title>
+    <style>
+        /* 基础样式 */
+        body {
+            background: #13151a;
+            color: white;
+            font-family: sans-serif;
+            padding: 20px;
+            text-align: center;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 主容器 */
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        /* 标题 */
+        .header {
+            margin-bottom: 60px;
+        }
+        
+        h1 {
+            color: #3b82f6;
+            margin: 0;
+        }
+        
+        /* 主控制区域 */
+        .control-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 30px 0;
+        }
+        
+        /* 控制按钮 */
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #374151;
+            color: white;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        
+        /* 主按钮 */
+        .main-btn {
+            padding: 12px 24px;
+            margin: 0 15px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            min-width: 100px;
+        }
+        
+        /* 路径显示 */
+        .path-display {
+            margin: 15px 0;
+            color: #60a5fa;
+            font-family: monospace;
+        }
+        
+        /* 底部按钮区域 */
+        .footer-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        /* 其他按钮 */
+        .btn {
+            padding: 8px 16px;
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        /* 页脚 */
+        .footer {
+            margin-top: 30px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 标题区域 -->
+        <div class="header">
+            <h1>CipherFortify Home</h1>
+        </div>
+        
+        <!-- 主控制区域 -->
+        <div class="control-area">
+            <button class="control-btn" id="decreaseBtn">-</button>
+            <button class="main-btn" id="mainBtn">/1</button>
+            <button class="control-btn" id="increaseBtn">+</button>
+        </div>
+        
+        <div class="path-display" id="pathDisplay">Current path: /1</div>
+        
+        <!-- 底部按钮区域 -->
+        <div class="footer-buttons">
+            <a href="/cookies" class="btn">Cookie Policy</a>
+            <a href="https://github.com/pryty26/CipherFortify_zero" class="btn" target="_blank">GitHub</a>
+        </div>
+        
+        <!-- 页脚 -->
+        <div class="footer">
+            <p>Developed by pryty26</p>
+        </div>
+    </div>
+
+    <script>
+        // 路径配置 - 在这里修改每个ID对应的路径
+        const PATH_CONFIG = {
+            1: { path: '/tips', name: 'The sitemap/tips', icon: '🗺️' },
+            2: { path: '/secrets', name: 'secrets\n(encrypt and decrypt)', icon: '🔐' },
+            3: { path: '/delete_secrets', name: 'delete your encrypted secrets', icon: '⚠️' },
+            4: { path: '/password_tools', name: 'A tools that can create and check passwords', icon: '🔑' },
+            5: { path: '/undone', name: 'undone', icon: '' },
+            6: { path: '/undone', name: 'undone', icon: '' },
+            7: { path: '/undone', name: 'undone', icon: '' },
+            8: { path: '/undone', name: 'undone', icon: '' },
+            9: { path: '/undone', name: 'undone', icon: '' },
+            10: { path: '/undone', name: 'undone', icon: '' }
+        };
+
+        let currentPathId = 1;
+        const pathIds = Object.keys(PATH_CONFIG).map(Number);
+        const minPathId = Math.min(...pathIds);
+        const maxPathId = Math.max(...pathIds);
+
+        const mainBtn = document.getElementById('mainBtn');
+        const decreaseBtn = document.getElementById('decreaseBtn');
+        const increaseBtn = document.getElementById('increaseBtn');
+        const pathDisplay = document.getElementById('pathDisplay');
+
+        function updatePath() {
+            const pathInfo = PATH_CONFIG[currentPathId];
+            
+            if (!pathInfo) {
+                console.error(`Path configuration not found for ID: ${currentPathId}`);
+                return;
+            }
+            
+            // 更新主按钮
+            mainBtn.textContent = `${pathInfo.icon} ${pathInfo.name}`;
+            mainBtn.onclick = function() {
+                if (pathInfo.path === '/undone' || pathInfo.status === 'coming') {
+                    alert('This feature is under development, please stay tuned!');
+                    return;
+                }
+                window.location.href = pathInfo.path;
+            };
+
+            
+            // 更新显示
+            pathDisplay.textContent = `current: ${pathInfo.path} - ${pathInfo.name} 
+            (ID: ${currentPathId})`;
+            
+            // 更新按钮状态
+            decreaseBtn.disabled = currentPathId <= minPathId;
+            increaseBtn.disabled = currentPathId >= maxPathId;
+        }
+
+        decreaseBtn.addEventListener('click', function() {
+            if (currentPathId > minPathId) {
+                currentPathId--;
+                updatePath();
+            }
+        });
+
+        increaseBtn.addEventListener('click', function() {
+            if (currentPathId < maxPathId) {
+                currentPathId++;
+                updatePath();
+            }
+        });
+
+        // 初始化
+        updatePath();
+    </script>
+</body>
+</html>
